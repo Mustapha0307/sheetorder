@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Order Desk — Admin</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #758098;
+      --line: #e8ebf2;
+      --paper: #fff;
+      --canvas: #f5f7fb;
+      --primary: #5b5ce2;
+      --primary-dark: #4849c7;
+      --green: #17845d;
+      --green-bg: #e9f7f1;
+      --amber: #a56a0a;
+      --amber-bg: #fff4dc;
+      --red: #b5434d;
+      --red-bg: #fff0f1;
+      --shadow: 0 12px 32px rgb(34 46 76 / 5%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--canvas);
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .app-shell { max-width: 1440px; margin: 0 auto; padding: 32px 40px 56px; }
+    .topbar, .brand, .top-actions, .connection, .section-heading, .toolbar, .search-box,
+    .order-title, .customer, .row-actions, .call-link, .confirm-button, .empty-state {
+      display: flex;
+      align-items: center;
+    }
+    .topbar { justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+    .brand { gap: 12px; }
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 7px 16px rgb(91 92 226 / 24%);
+    }
+    .brand-mark svg { width: 22px; height: 22px; }
+    .brand-name { margin: 0; font-size: 17px; font-weight: 750; letter-spacing: -.35px; }
+    .brand-caption { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .top-actions { gap: 10px; }
+    .icon-button {
+      display: inline-grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--paper);
+      color: #66718a;
+    }
+    .icon-button:hover { border-color: #c9cce8; color: var(--primary); }
+    .icon-button svg { width: 18px; height: 18px; }
+    .avatar {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border-radius: 50%;
+      background: #e9e9ff;
+      color: #4c4dc7;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .welcome { margin-bottom: 24px; }
+    .welcome h1 { margin: 0; font-size: clamp(24px, 3vw, 30px); letter-spacing: -1px; }
+    .welcome p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+
+    .connection {
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .connection-icon { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #f0f0ff; color: var(--primary); }
+    .connection-icon svg { width: 17px; height: 17px; }
+    .connection-copy { min-width: 160px; flex: 1; }
+    .connection-copy strong { display: block; margin-bottom: 3px; font-size: 13px; }
+    .connection-copy span { color: var(--muted); font-size: 12px; }
+    .endpoint-input {
+      min-width: 180px;
+      flex: 1.4;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      outline: none;
+      color: var(--ink);
+      background: #fcfcfe;
+    }
+    .endpoint-input:focus, .search-box:focus-within { border-color: #aaaaf2; box-shadow: 0 0 0 3px rgb(91 92 226 / 10%); }
+    .button-primary, .button-secondary {
+      display: inline-flex;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .button-primary { background: var(--primary); color: #fff; }
+    .button-primary:hover { background: var(--primary-dark); }
+    .button-primary:disabled { cursor: wait; opacity: .65; }
+    .button-secondary { border: 1px solid var(--line); background: var(--paper); color: #59647b; }
+    .button-secondary:hover { border-color: #c8c9e9; color: var(--primary); }
+    .button-primary svg, .button-secondary svg { width: 15px; height: 15px; }
+    .connection-message { flex-basis: 100%; margin: -3px 0 0 46px; color: var(--muted); font-size: 12px; }
+    .connection-message.error { color: var(--red); }
+    .connection-message.success { color: var(--green); }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      position: relative;
+      min-height: 122px;
+      padding: 19px 20px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .stat-label { color: var(--muted); font-size: 12px; font-weight: 550; }
+    .stat-value { margin-top: 13px; font-size: 28px; font-weight: 750; letter-spacing: -.8px; }
+    .stat-icon { position: absolute; top: 17px; right: 18px; display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; color: var(--primary); background: #f0f0ff; }
+    .stat-card:nth-child(2) .stat-icon { color: var(--amber); background: var(--amber-bg); }
+    .stat-card:nth-child(3) .stat-icon { color: var(--green); background: var(--green-bg); }
+    .stat-card:nth-child(4) .stat-icon { color: #6574a1; background: #eff2f8; }
+    .stat-icon svg { width: 17px; height: 17px; }
+    .stat-note { margin-top: 5px; color: #98a0b1; font-size: 11px; }
+
+    .orders-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); box-shadow: var(--shadow); }
+    .section-heading { justify-content: space-between; gap: 18px; padding: 21px 22px 16px; }
+    .section-heading h2 { margin: 0; font-size: 16px; letter-spacing: -.25px; }
+    .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .toolbar { justify-content: space-between; gap: 12px; padding: 0 22px 17px; }
+    .search-box { width: min(340px, 100%); height: 39px; gap: 8px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+    .search-box svg { flex: 0 0 16px; width: 16px; height: 16px; color: #98a0b1; }
+    .search-box input { width: 100%; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 12px; }
+    .filter-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: #f5f6fa; }
+    .filter-tab { height: 30px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: #788197; font-size: 12px; font-weight: 600; }
+    .filter-tab.active { background: #fff; color: var(--primary); box-shadow: 0 1px 4px rgb(32 40 61 / 10%); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    thead { background: #fafbfc; }
+    th { padding: 12px 20px; border-top: 1px solid #f0f1f5; border-bottom: 1px solid #f0f1f5; color: #8991a4; font-size: 10px; font-weight: 700; letter-spacing: .65px; text-transform: uppercase; white-space: nowrap; }
+    td { height: 76px; padding: 12px 20px; border-bottom: 1px solid #f0f1f5; color: #48536a; font-size: 12px; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fcfcff; }
+    .order-title { gap: 10px; color: var(--ink); font-weight: 680; }
+    .order-initial { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border-radius: 10px; background: #f0f0ff; color: var(--primary); font-size: 11px; font-weight: 750; }
+    .customer { gap: 9px; }
+    .customer-avatar { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 50%; background: #f1f3f8; color: #68738a; font-size: 10px; font-weight: 700; }
+    .customer-name { color: var(--ink); font-weight: 620; }
+    .phone-number { color: #778198; font-size: 11px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 20px; font-size: 11px; font-weight: 650; }
+    .status-pill::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .status-pending { color: var(--amber); background: var(--amber-bg); }
+    .status-confirmed { color: var(--green); background: var(--green-bg); }
+    .status-cancelled { color: var(--red); background: var(--red-bg); }
+    .status-other { color: #68738a; background: #eff2f8; }
+    .row-actions { gap: 7px; }
+    .call-link, .confirm-button { height: 33px; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 8px; font-size: 11px; font-weight: 650; text-decoration: none; }
+    .call-link { border: 1px solid #e0e0fb; background: #f7f7ff; color: var(--primary); }
+    .call-link:hover { background: #efefff; }
+    .confirm-button { border: 1px solid #d6efe4; background: #f3fbf7; color: var(--green); }
+    .confirm-button:hover { background: var(--green-bg); }
+    .cancel-button { height: 33px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 1px solid #f3dadd; border-radius: 8px; background: #fff8f8; color: var(--red); font-size: 11px; font-weight: 650; }
+    .cancel-button:hover { background: var(--red-bg); }
+    .confirm-button:disabled, .cancel-button:disabled { cursor: default; border-color: #e6e9ef; background: #f7f8fa; color: #929aaa; }
+    .row-actions svg { width: 13px; height: 13px; }
+    .empty-state { min-height: 220px; flex-direction: column; justify-content: center; padding: 28px; color: var(--muted); text-align: center; }
+    .empty-icon { display: grid; width: 48px; height: 48px; margin-bottom: 12px; place-items: center; border-radius: 15px; background: #f0f0ff; color: var(--primary); }
+    .empty-icon svg { width: 22px; height: 22px; }
+    .empty-state strong { margin-bottom: 5px; color: var(--ink); font-size: 14px; }
+    .empty-state p { max-width: 380px; margin: 0; font-size: 12px; line-height: 1.6; }
+    .table-footer { display: flex; justify-content: space-between; gap: 12px; padding: 13px 22px; border-top: 1px solid #f0f1f5; color: #929aaa; font-size: 11px; }
+    .mobile-orders { display: none; }
+    .local-note { color: #9a7a3c; }
+
+    @media (max-width: 900px) {
+      .app-shell { padding: 28px 24px 44px; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      th, td { padding-right: 14px; padding-left: 14px; }
+    }
+    @media (max-width: 650px) {
+      .app-shell { padding: 21px 15px 34px; }
+      .topbar { margin-bottom: 27px; }
+      .brand-caption, .avatar { display: none; }
+      .welcome { margin-bottom: 20px; }
+      .connection { gap: 10px; padding: 13px; }
+      .connection-copy { min-width: calc(100% - 50px); }
+      .endpoint-input { flex-basis: 100%; }
+      .button-primary { flex: 1; }
+      .connection-message { margin-left: 0; }
+      .stats-grid { gap: 10px; margin-bottom: 20px; }
+      .stat-card { min-height: 108px; padding: 15px; }
+      .stat-value { margin-top: 11px; font-size: 25px; }
+      .stat-icon { top: 12px; right: 12px; width: 30px; height: 30px; }
+      .section-heading { align-items: flex-start; padding: 18px 15px 14px; }
+      .toolbar { align-items: stretch; flex-direction: column; padding: 0 15px 14px; }
+      .search-box { width: 100%; }
+      .filter-tabs { overflow-x: auto; }
+      .filter-tab { flex: 1; padding: 0 9px; }
+      .table-wrap { display: none; }
+      .mobile-orders { display: block; border-top: 1px solid #f0f1f5; }
+      .mobile-order { padding: 15px; border-bottom: 1px solid #f0f1f5; }
+      .mobile-order:last-child { border-bottom: 0; }
+      .mobile-order-head { display: flex; justify-content: space-between; gap: 8px; }
+      .mobile-meta { display: flex; justify-content: space-between; gap: 12px; margin: 13px 0; color: var(--muted); font-size: 11px; }
+      .mobile-meta > span { overflow: hidden; text-overflow: ellipsis; }
+      .mobile-order .row-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .mobile-order .call-link, .mobile-order .confirm-button, .mobile-order .cancel-button { height: 36px; padding: 0 6px; }
+      .table-footer { padding: 12px 15px; }
+      .table-footer span:last-child { text-align: right; }
+    }
+    @media (max-width: 380px) {
+      .filter-tab { padding: 0 6px; font-size: 11px; }
+      .table-footer { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7.5h16v12H4z"/><path d="M8 7.5V5h8v2.5M8 12h8M8 15.5h5"/></svg>
+        </div>
+        <div>
+          <p class="brand-name">Order Desk</p>
+          <p class="brand-caption">Your store, in good hands</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" id="refresh-top" type="button" aria-label="Refresh orders" title="Refresh orders">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg>
+        </button>
+        <div class="avatar" aria-label="Admin">AD</div>
+      </div>
+    </header>
+
+    <section class="welcome">
+      <h1>Good day, Admin <span aria-hidden="true">👋</span></h1>
+      <p>Keep orders moving. Call customers to confirm their details and delivery.</p>
+    </section>
+
+    <section class="connection" aria-label="Connect order data">
+      <div class="connection-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5h16v13H4zM8 9h8M8 12h8M8 15h4"/></svg>
+      </div>
+      <div class="connection-copy">
+        <strong>Connect your order sheet</strong>
+        <span>Paste the deployed Apps Script web app URL to load live orders.</span>
+      </div>
+      <input class="endpoint-input" id="endpoint" type="url" placeholder="https://script.google.com/macros/s/…/exec" aria-label="Apps Script web app URL" autocomplete="url">
+      <button class="button-primary" id="connect-button" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Connect
+      </button>
+      <p class="connection-message" id="connection-message" role="status">Your URL is saved in this browser for next time.</p>
+    </section>
+
+    <section class="stats-grid" aria-label="Order summary">
+      <article class="stat-card">
+        <span class="stat-label">Total orders</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7.5h16v12H4z"/><path d="M8 7.5V5h8v2.5"/></svg></span>
+        <div class="stat-value" id="total-count">—</div>
+        <div class="stat-note">Orders in your sheet</div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">To confirm</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></span>
+        <div class="stat-value" id="pending-count">—</div>
+        <div class="stat-note">Ready for a follow-up call</div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Confirmed</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4.5 4.5L19 7"/></svg></span>
+        <div class="stat-value" id="confirmed-count">—</div>
+        <div class="stat-note">Ready to move forward</div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Need attention</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4 21 20H3z"/><path d="M12 9v5M12 17h.01"/></svg></span>
+        <div class="stat-value" id="attention-count">—</div>
+        <div class="stat-note">Cancelled or other statuses</div>
+      </article>
+    </section>
+
+    <section class="orders-panel" aria-labelledby="orders-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="orders-heading">Recent orders</h2>
+          <p>Call a customer to confirm their order.</p>
+        </div>
+        <button class="button-secondary" id="refresh-button" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="toolbar">
+        <label class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg>
+          <input id="search" type="search" placeholder="Search name or phone…" aria-label="Search orders">
+        </label>
+        <div class="filter-tabs" role="group" aria-label="Filter orders">
+          <button class="filter-tab active" data-filter="all" type="button">All</button>
+          <button class="filter-tab" data-filter="pending" type="button">To confirm</button>
+          <button class="filter-tab" data-filter="confirmed" type="button">Confirmed</button>
+          <button class="filter-tab" data-filter="attention" type="button">Other</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Order</th><th>Customer</th><th>Order date</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="orders-table"></tbody>
+        </table>
+      </div>
+      <div class="mobile-orders" id="mobile-orders"></div>
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7.5h16v12H4z"/><path d="M8 7.5V5h8v2.5M8 12h8"/></svg></div>
+        <strong id="empty-title">Connect your sheet to get started</strong>
+        <p id="empty-description">Paste your deployed Apps Script web app URL above. Orders from the LandingPage sheet will appear here.</p>
+      </div>
+      <div class="table-footer">
+        <span id="results-count">Waiting for order data</span>
+        <span>Confirmation and cancellation are written to your sheet.</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const endpointInput = document.querySelector("#endpoint");
+    const connectButton = document.querySelector("#connect-button");
+    const connectionMessage = document.querySelector("#connection-message");
+    const searchInput = document.querySelector("#search");
+    let orders = [];
+    let activeFilter = "all";
+    const inFlightRows = new Set();
+
+    function normalizedStatus(order) {
+      const status = String(order.status ?? "").trim().toLowerCase();
+      if (status.includes("confirm")) return "confirmed";
+      if (status.includes("cancel") || status.includes("reject")) return "cancelled";
+      if (!status || status.includes("pending") || status.includes("new") || status.includes("wait")) return "pending";
+      return "other";
+    }
+
+    function statusLabel(order) {
+      const state = normalizedStatus(order);
+      if (state === "confirmed") return "Confirmed";
+      if (state === "pending") return order.status ? String(order.status) : "Pending";
+      if (state === "cancelled") return "Cancelled";
+      return String(order.status || "Other");
+    }
+
+    function safeText(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[character]);
+    }
+
+    function initials(name) {
+      const parts = String(name || "?").trim().split(/\s+/).filter(Boolean);
+      return safeText(parts.slice(0, 2).map(part => part[0]).join("").toUpperCase() || "?");
+    }
+
+    function formatDate(value) {
+      if (value === null || value === undefined || value === "") return "—";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return safeText(value);
+      return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(date);
+    }
+
+    function callHref(phone) {
+      return "tel:" + String(phone ?? "").replace(/[^\d+*#,;]/g, "");
+    }
+
+    function renderOrder(order, index) {
+      const state = normalizedStatus(order);
+      const name = String(order.name || "Unnamed customer");
+      const phone = String(order.phone || "");
+      const phoneDisplay = phone || "No phone number";
+      const orderNumber = String(index + 1).padStart(3, "0");
+      const row = Number(order._row);
+      const updating = inFlightRows.has(row);
+      const canConfirm = state === "pending";
+      const canCancel = state !== "cancelled" && state !== "other";
+      const actions = `
+        <div class="row-actions">
+          ${phone ? `<a class="call-link" href="${safeText(callHref(phone))}" aria-label="Call ${safeText(name)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 2a14 14 0 0 1-8-8l2-2z"/></svg>Call
+          </a>` : `<button class="call-link" type="button" disabled title="No phone number available">No phone</button>`}
+          ${canConfirm ? `<button class="confirm-button" type="button" data-status="Confirmed" data-index="${index}" ${updating ? "disabled" : ""}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4.5 4.5L19 7"/></svg>${updating ? "Saving…" : "Confirm"}
+          </button>` : ""}
+          ${canCancel ? `<button class="cancel-button" type="button" data-status="Cancelled" data-index="${index}" ${updating ? "disabled" : ""} aria-label="Cancel order for ${safeText(name)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 7 10 10M17 7 7 17"/></svg>${updating ? "Saving…" : "Cancel"}
+          </button>` : ""}
+        </div>`;
+      const label = statusLabel(order);
+      const className = state === "confirmed" ? "status-confirmed" : state === "pending" ? "status-pending" : state === "cancelled" ? "status-cancelled" : "status-other";
+      return {
+        desktop: `<tr>
+          <td><div class="order-title"><span class="order-initial">#${orderNumber}</span>Order #${orderNumber}</div></td>
+          <td><div class="customer"><span class="customer-avatar">${initials(name)}</span><span><span class="customer-name">${safeText(name)}</span><br><span class="phone-number">${safeText(phoneDisplay)}</span></span></div></td>
+          <td>${formatDate(order.date)}</td>
+          <td><span class="status-pill ${className}">${safeText(label)}</span></td>
+          <td>${actions}</td>
+        </tr>`,
+        mobile: `<article class="mobile-order">
+          <div class="mobile-order-head">
+            <div class="order-title"><span class="order-initial">#${orderNumber}</span><span>${safeText(name)}</span></div>
+            <span class="status-pill ${className}">${safeText(label)}</span>
+          </div>
+          <div class="mobile-meta"><span>${safeText(phoneDisplay)}</span><span>${formatDate(order.date)}</span></div>
+          ${actions}
+        </article>`
+      };
+    }
+
+    function render() {
+      const query = searchInput.value.trim().toLowerCase();
+      const visibleOrders = orders.map((order, index) => ({ order, index })).filter(({ order }) => {
+        const state = normalizedStatus(order);
+        const matchesFilter = activeFilter === "all" ||
+          (activeFilter === "pending" && state === "pending") ||
+          (activeFilter === "confirmed" && state === "confirmed") ||
+          (activeFilter === "attention" && state !== "pending" && state !== "confirmed");
+        const matchesQuery = !query || `${order.name ?? ""} ${order.phone ?? ""}`.toLowerCase().includes(query);
+        return matchesFilter && matchesQuery;
+      });
+      const pending = orders.filter(order => normalizedStatus(order) === "pending").length;
+      const confirmed = orders.filter(order => normalizedStatus(order) === "confirmed").length;
+      const attention = orders.length - pending - confirmed;
+      document.querySelector("#total-count").textContent = orders.length;
+      document.querySelector("#pending-count").textContent = pending;
+      document.querySelector("#confirmed-count").textContent = confirmed;
+      document.querySelector("#attention-count").textContent = attention;
+      document.querySelector("#orders-table").innerHTML = visibleOrders.map(({ order, index }) => renderOrder(order, index).desktop).join("");
+      document.querySelector("#mobile-orders").innerHTML = visibleOrders.map(({ order, index }) => renderOrder(order, index).mobile).join("");
+      document.querySelector("#empty-state").hidden = visibleOrders.length > 0;
+      document.querySelector(".table-wrap").hidden = orders.length === 0;
+      document.querySelector("#mobile-orders").hidden = orders.length === 0;
+      document.querySelector("#results-count").textContent = orders.length
+        ? `Showing ${visibleOrders.length} of ${orders.length} orders`
+        : "Waiting for order data";
+      if (orders.length && visibleOrders.length === 0) {
+        document.querySelector("#empty-title").textContent = "No matching orders";
+        document.querySelector("#empty-description").textContent = "Try another search or choose a different status filter.";
+      } else if (!orders.length) {
+        document.querySelector("#empty-title").textContent = "Connect your sheet to get started";
+        document.querySelector("#empty-description").textContent = "Paste your deployed Apps Script web app URL above. Orders from the LandingPage sheet will appear here.";
+      }
+    }
+
+    function setMessage(message, type = "") {
+      connectionMessage.textContent = message;
+      connectionMessage.className = `connection-message${type ? ` ${type}` : ""}`;
+    }
+
+    async function loadOrders() {
+      const url = endpointInput.value.trim();
+      if (!url) {
+        setMessage("Paste your deployed Apps Script web app URL first.", "error");
+        endpointInput.focus();
+        return;
+      }
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        setMessage("Enter a valid web app URL.", "error");
+        endpointInput.focus();
+        return;
+      }
+      if (parsedUrl.protocol !== "https:") {
+        setMessage("The Apps Script web app URL must use HTTPS.", "error");
+        return;
+      }
+
+      connectButton.disabled = true;
+      connectButton.textContent = "Loading…";
+      setMessage("Connecting to your sheet…");
+      try {
+        const response = await fetch(parsedUrl.href);
+        if (!response.ok) throw new Error(`The server returned ${response.status}.`);
+        const data = await response.json();
+        if (!Array.isArray(data) || data.some(item => !item || typeof item !== "object" || Array.isArray(item))) {
+          throw new Error("The endpoint must return a JSON array of order objects.");
+        }
+        if (data.some(item => !("name" in item) && !("phone" in item) && !("status" in item))) {
+          throw new Error("Orders must include name, phone, or status fields.");
+        }
+        orders = data.map((item, index) => {
+          const row = item._row === undefined ? index + 2 : Number(item._row);
+          if (!Number.isInteger(row) || row < 2) {
+            throw new Error("Orders must include a valid _row value. Update and redeploy the Apps Script.");
+          }
+          return { ...item, _row: row };
+        });
+        localStorage.setItem("order-desk-endpoint", parsedUrl.href);
+        render();
+        setMessage(`Connected — ${orders.length} ${orders.length === 1 ? "order" : "orders"} loaded.`, "success");
+      } catch (error) {
+        console.error("Could not load orders.", error);
+        setMessage(`Could not load orders: ${error.message} Check the URL, deployment access, and Apps Script permissions.`, "error");
+      } finally {
+        connectButton.disabled = false;
+        connectButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Connect`;
+      }
+    }
+
+    async function updateOrderStatus(order, status, index) {
+      const row = Number(order._row);
+      if (!Number.isInteger(row) || row < 2) {
+        setMessage("This order has no valid sheet row. Refresh after updating the Apps Script.", "error");
+        return;
+      }
+      if (status === "Cancelled" && !window.confirm("Cancel this order? Its status will be updated in the Google Sheet.")) return;
+
+      inFlightRows.add(row);
+      render();
+      setMessage(`Updating order #${String(index + 1).padStart(3, "0")}…`);
+      try {
+        const response = await fetch(endpointInput.value.trim(), {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ row, status })
+        });
+        if (!response.ok) throw new Error(`The server returned ${response.status}.`);
+        const result = await response.json();
+        if (!result || result.ok !== true) {
+          throw new Error(result && result.error ? result.error : "The Apps Script did not confirm the update.");
+        }
+        order.status = status;
+        render();
+        setMessage(`Order #${String(index + 1).padStart(3, "0")} marked ${status.toLowerCase()}.`, "success");
+      } catch (error) {
+        console.error("Could not update order status.", error);
+        setMessage(`Could not update the sheet: ${error.message} Check Apps Script deployment permissions and redeploy the latest version.`, "error");
+      } finally {
+        inFlightRows.delete(row);
+        render();
+      }
+    }
+
+    connectButton.addEventListener("click", loadOrders);
+    endpointInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") loadOrders();
+    });
+    document.querySelector("#refresh-button").addEventListener("click", loadOrders);
+    document.querySelector("#refresh-top").addEventListener("click", loadOrders);
+    searchInput.addEventListener("input", render);
+    document.querySelectorAll(".filter-tab").forEach(button => {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.filter;
+        document.querySelectorAll(".filter-tab").forEach(tab => tab.classList.toggle("active", tab === button));
+        render();
+      });
+    });
+    document.addEventListener("click", event => {
+      const button = event.target.closest("[data-status]");
+      if (!button || button.disabled) return;
+      const index = Number(button.dataset.index);
+      const order = orders[index];
+      if (!order) return;
+      updateOrderStatus(order, button.dataset.status, index);
+    });
+
+    try {
+      endpointInput.value = localStorage.getItem("order-desk-endpoint") || "";
+    } catch (error) {
+      console.error("Could not read the saved endpoint.", error);
+    }
+    render();
+    if (endpointInput.value) loadOrders();
+  </script>
+</body>
+</html>
