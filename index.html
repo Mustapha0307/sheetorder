@@ -158,15 +158,7 @@
     .stat-icon svg { width: 17px; height: 17px; }
     .stat-note { margin-top: 5px; color: #98a0b1; font-size: 11px; }
 
-    .orders-panel {
-      max-height: 720px;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid var(--line);
-      border-radius: 15px;
-      background: var(--paper);
-      box-shadow: var(--shadow);
-    }
+    .orders-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); box-shadow: var(--shadow); }
     .section-heading { justify-content: space-between; gap: 18px; padding: 21px 22px 16px; }
     .section-heading h2 { margin: 0; font-size: 16px; letter-spacing: -.25px; }
     .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
@@ -177,12 +169,7 @@
     .filter-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: #f5f6fa; }
     .filter-tab { height: 30px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: #788197; font-size: 12px; font-weight: 600; }
     .filter-tab.active { background: #fff; color: var(--primary); box-shadow: 0 1px 4px rgb(32 40 61 / 10%); }
-    .table-wrap {
-      position: absolute;
-      max-height: 480px;
-      overflow-x: auto;
-      overflow-y: auto;
-    }
+    .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     thead { background: #fafbfc; }
     th { padding: 12px 20px; border-top: 1px solid #f0f1f5; border-bottom: 1px solid #f0f1f5; color: #8991a4; font-size: 10px; font-weight: 700; letter-spacing: .65px; text-transform: uppercase; white-space: nowrap; }
@@ -513,7 +500,7 @@
       document.querySelector("#attention-count").textContent = attention;
       document.querySelector("#orders-table").innerHTML = visibleOrders.map(({ order, index }) => renderOrder(order, index).desktop).join("");
       document.querySelector("#mobile-orders").innerHTML = visibleOrders.map(({ order, index }) => renderOrder(order, index).mobile).join("");
-      document.querySelector("#empty-state").hidden = orders.length > 0 && visibleOrders.length > 0;
+      document.querySelector("#empty-state").hidden = visibleOrders.length > 0;
       document.querySelector(".table-wrap").hidden = orders.length === 0;
       document.querySelector("#mobile-orders").hidden = orders.length === 0;
       document.querySelector("#results-count").textContent = orders.length
@@ -641,7 +628,7 @@
       if (!order) return;
       updateOrderStatus(order, button.dataset.status, index);
     });
-    
+
     try {
       endpointInput.value = localStorage.getItem("order-desk-endpoint") || "";
     } catch (error) {
