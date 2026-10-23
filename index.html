@@ -182,6 +182,7 @@
     .customer-avatar { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 50%; background: #f1f3f8; color: #68738a; font-size: 10px; font-weight: 700; }
     .customer-name { color: var(--ink); font-weight: 620; }
     .phone-number { color: #778198; font-size: 11px; }
+    .address-line { color: #7a8497; font-size: 10.5px; }
     .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 20px; font-size: 11px; font-weight: 650; }
     .status-pill::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
     .status-pending { color: var(--amber); background: var(--amber-bg); }
@@ -331,7 +332,7 @@
       <div class="toolbar">
         <label class="search-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg>
-          <input id="search" type="search" placeholder="Search name or phone…" aria-label="Search orders">
+          <input id="search" type="search" placeholder="Search name, phone or address…" aria-label="Search orders">
         </label>
         <div class="filter-tabs" role="group" aria-label="Filter orders">
           <button class="filter-tab active" data-filter="all" type="button">All</button>
@@ -405,6 +406,28 @@
       return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(date);
     }
 
+    function formatNumber(value) {
+      if (value === null || value === undefined || value === "") return "";
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return String(value).trim();
+      return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(numeric);
+    }
+
+    function formatOrderSummary(order) {
+      const summary = [];
+      const qnt = order.qnt;
+      const price = order.price;
+      const priceDiscount = order.priceD;
+      const total = order.sum;
+
+      if (qnt !== null && qnt !== undefined && qnt !== "") summary.push(`Qty ${formatNumber(qnt)}`);
+      if (price !== null && price !== undefined && price !== "") summary.push(`Price ${formatNumber(price)}`);
+      if (priceDiscount !== null && priceDiscount !== undefined && priceDiscount !== "" && Number(priceDiscount) !== 0) summary.push(`Shipping ${formatNumber(priceDiscount)}`);
+      const totalValue = Number(total) + Number(priceDiscount);
+      if (total !== null && total !== undefined && total !== "") summary.push(`Total ${formatNumber(totalValue)}`);
+      return summary.join(" • ");
+    }
+
     function callHref(phone) {
       return "tel:" + String(phone ?? "").replace(/[^\d+*#,;]/g, "");
     }
@@ -414,6 +437,9 @@
       const name = String(order.name || "Unnamed customer");
       const phone = String(order.phone || "");
       const phoneDisplay = phone || "No phone number";
+      const address = String(order.address || "").trim();
+      const addressDisplay = address || "";
+      const extraInfo = formatOrderSummary(order);
       const orderNumber = String(index + 1).padStart(3, "0");
       const row = Number(order._row);
       const updating = inFlightRows.has(row);
@@ -421,7 +447,7 @@
       const canCancel = state !== "cancelled" && state !== "other";
       const actions = `
         <div class="row-actions">
-          ${phone ? `<a class="call-link" href="${safeText(callHref(phone))}" aria-label="Call ${safeText(name)}">
+          ${phone ? `<a class="call-link" href="${safeText(callHref("0"+phone))}" aria-label="Call ${safeText(name)}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 2a14 14 0 0 1-8-8l2-2z"/></svg>Call
           </a>` : `<button class="call-link" type="button" disabled title="No phone number available">No phone</button>`}
           ${canConfirm ? `<button class="confirm-button" type="button" data-status="Confirmed" data-index="${index}" ${updating ? "disabled" : ""}>
@@ -433,10 +459,11 @@
         </div>`;
       const label = statusLabel(order);
       const className = state === "confirmed" ? "status-confirmed" : state === "pending" ? "status-pending" : state === "cancelled" ? "status-cancelled" : "status-other";
+      const customerDetails = `${safeText(phoneDisplay)}${addressDisplay ? `<br><span class="address-line">${safeText(addressDisplay)}</span>` : ""}${extraInfo ? `<br><span class="address-line">${safeText(extraInfo)}</span>` : ""}`;
       return {
         desktop: `<tr>
           <td><div class="order-title"><span class="order-initial">#${orderNumber}</span>Order #${orderNumber}</div></td>
-          <td><div class="customer"><span class="customer-avatar">${initials(name)}</span><span><span class="customer-name">${safeText(name)}</span><br><span class="phone-number">${safeText(phoneDisplay)}</span></span></div></td>
+          <td><div class="customer"><span class="customer-avatar">${initials(name)}</span><span><span class="customer-name">${safeText(name)}</span><br>${customerDetails}</span></div></td>
           <td>${formatDate(order.date)}</td>
           <td><span class="status-pill ${className}">${safeText(label)}</span></td>
           <td>${actions}</td>
@@ -446,7 +473,8 @@
             <div class="order-title"><span class="order-initial">#${orderNumber}</span><span>${safeText(name)}</span></div>
             <span class="status-pill ${className}">${safeText(label)}</span>
           </div>
-          <div class="mobile-meta"><span>${safeText(phoneDisplay)}</span><span>${formatDate(order.date)}</span></div>
+          <div class="mobile-meta"><span>0${safeText(phoneDisplay)}</span>${addressDisplay ? `<span>${safeText(addressDisplay)}</span>` : ""}<span>${formatDate(order.date)}</span></div>
+          ${extraInfo ? `<div class="address-line" style="margin: 0 0 10px;">${safeText(extraInfo)}</div>` : ""}
           ${actions}
         </article>`
       };
@@ -460,7 +488,7 @@
           (activeFilter === "pending" && state === "pending") ||
           (activeFilter === "confirmed" && state === "confirmed") ||
           (activeFilter === "attention" && state !== "pending" && state !== "confirmed");
-        const matchesQuery = !query || `${order.name ?? ""} ${order.phone ?? ""}`.toLowerCase().includes(query);
+        const matchesQuery = !query || `${order.name ?? ""} ${order.phone ?? ""} ${order.address ?? ""}`.toLowerCase().includes(query);
         return matchesFilter && matchesQuery;
       });
       const pending = orders.filter(order => normalizedStatus(order) === "pending").length;
